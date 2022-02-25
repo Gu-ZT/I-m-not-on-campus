@@ -71,8 +71,8 @@ class answer:
         self.data = {
             "answers": '["0"]',
 
-            "latitude": {int(getConfig("Position", "latitude"))},
-            "longitude": {int(getConfig("Position", "longitude"))},
+            "latitude": {float(getConfig("Position", "latitude"))},
+            "longitude": {float(getConfig("Position", "longitude"))},
             "country": {getConfig("Position", "country")},
             "province": {getConfig("Position", "province")},
             "city": {getConfig("Position", "city")},
