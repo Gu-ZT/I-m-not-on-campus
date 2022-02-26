@@ -91,12 +91,10 @@ class answer:
     def get_seq(self):
         current_hour = datetime.datetime.now()
         current_hour = current_hour.hour + 8
-        if 6 <= current_hour <= 9:
-            return "1"
-        elif 12 <= current_hour < 15:
-            return "2"
-        elif 19 <= current_hour < 22:
-            return "3"
+        if 0 <= current_hour <= 11:
+            return 1
+        elif 12 <= current_hour < 17:
+            return 2
         else:
             return 1
 
