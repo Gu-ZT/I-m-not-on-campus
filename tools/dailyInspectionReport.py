@@ -1,19 +1,13 @@
-import datetime
 import json
 import logging
+import requests, time, random
+import datetime
 import smtplib
 from email.mime.text import MIMEText
 from email.utils import formataddr
-
-import random
-import requests
-import time
-
 from tools.lib.readConfig import getConfig
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
 
 def get_status(self):
     if self['code'] == 0:
@@ -25,11 +19,10 @@ def get_status(self):
     else:
         return "！！！发生未知错误"
 
-
 class answer:
-    def __init__(self):  # 使用前请阅读 新版必读.txt
-        username = getConfig('Settings', 'username')  # 修改1 账号 一般是手机号
-        password = getConfig('Settings', 'password')  # 修改2 密码
+    def __init__(self):      # 使用前请阅读 新版必读.txt
+        username = getConfig('Settings', 'username')   # 修改1 账号 一般是手机号
+        password = getConfig('Settings', 'password')   # 修改2 密码
         header = {
             "Host": "student.wozaixiaoyuan.com",
             "Content-Type": "application/x-www-form-urlencoded",
@@ -37,7 +30,7 @@ class answer:
             "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "en-us,en",
             "Connection": "keep-alive",
-            "User-Agent": f"{getConfig('Settings', 'user-agent')}",  # 修改3 抓包获取/从旧版代码复制
+            "User-Agent": f"{getConfig('Settings', 'user-agent')}",   # 修改3 抓包获取/从旧版代码复制
             "Content-Length": "360",
         }
         loginUrl = "https://gw.wozaixiaoyuan.com/basicinfo/mobile/login/username"
@@ -56,7 +49,7 @@ class answer:
         self.my_Name = getConfig('Email', 'sender-name')  # 修改4 姓名
         self.my_sender = getConfig("Email", "sender-account")  # 修改5 填写发信人的邮箱账号
         self.my_pass = getConfig("Email", "sender-password")  # 修改6 发件人邮箱授权码
-        self.my_user = getConfig("Email", "addressee")  # 修改7 收件人邮箱账号
+        self.my_user = getConfig("Email", "addressee-account")  # 修改7 收件人邮箱账号
 
         self.api = "https://student.wozaixiaoyuan.com/heat/save.json"
         self.headers = {
@@ -70,6 +63,7 @@ class answer:
             "JWSESSION": str(jwsession),
         }
         self.data = {
+            "timestampHeader": int(time.time()),
             "answers": '["0"]',
             "seq": self.get_seq(),
             "temperature": self.get_random_temprature(),
@@ -91,10 +85,10 @@ class answer:
     def get_seq(self):
         current_hour = datetime.datetime.now()
         current_hour = current_hour.hour + 8
-        if 0 <= current_hour <= 11:
-            return 1
-        elif 12 <= current_hour < 17:
-            return 2
+        if 0 <= current_hour <= 12:
+            return "1"
+        elif 12 <= current_hour < 23:
+            return "2"
         else:
             return 1
 
@@ -103,9 +97,9 @@ class answer:
         res = requests.post(self.api, headers=self.headers, data=self.data, ).json()  # 打卡提交
         print(res)
         try:
-            msg = MIMEText(self.my_Name + "  " + get_status(res), 'plain', 'utf-8')  # 填写邮件内容
+            msg = MIMEText(self.my_Name+"  "+get_status(res), 'plain', 'utf-8')  # 填写邮件内容
             msg['From'] = formataddr([f"{getConfig('Email', 'sender-name')}", self.my_sender])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
-            msg['To'] = formataddr([f"{getConfig('Email', 'addressee-name')}", self.my_user])  # 括号里的对应收件人邮箱昵称、收件人邮箱账号，这里的xxx可选择性修改
+            msg['To'] = formataddr([f"{getConfig('Email', 'addressee-name')}", self.my_user])  # 括号里的对应收件人邮箱昵称、收件人邮箱账号，此处xxx可选择性修改
             msg['Subject'] = get_status(res)  # 邮件的主题，也可以说是标题
 
             server = smtplib.SMTP_SSL(f"{getConfig('Email', 'smtp')}", 465)  # 发件人邮箱中的SMTP服务器
@@ -118,11 +112,10 @@ class answer:
             print(res)
         return True
 
-
 if __name__ == "__main__":
     answer().run()
 
 
-def main_handler(event):
+def main_handler(event, context):
     logger.info('got event{}'.format(event))
     return answer().run()
